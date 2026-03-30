@@ -1,0 +1,52 @@
+# Phase 1 Default Configuration — MAPPO / MAPPO-L
+#
+# 用法: python -c "from src.config import load_config; cfg = load_config()"
+#       或 python script.py --config.key=value CLI override
+#
+# 文档: docs/architecture/phase1-prototype-plan.md
+
+env:
+  env_name: SafeAnt2x4               # 原生 Safe MAMujoco; fallback 用 gymnasium Ant-v5 + CostWrapper
+  fallback: true                      # true = 用 gymnasium fallback adapter
+  render_mode: rgb_array              # headless 渲染
+  num_envs: 1                         # parallel env 数量（phase1 smoke test 用 1）
+  max_episode_steps: 1000
+
+algo:
+  algo_name: MAPPO-L                  # 可选: MAPPO, MAPPO-L
+  seed: 42
+
+  # --- PPO 核心超参数 ---
+  lr: 3.0e-4                          # learning rate
+  gamma: 0.99                         # discount factor
+  lam: 0.95                           # GAE lambda
+  clip_eps: 0.2                       # PPO clip epsilon
+  target_kl: 0.01                     # early stopping KL threshold
+  hidden_dim: 64                      # shared encoder hidden dim
+  activation: tanh
+
+  # --- 训练循环 ---
+  num_steps: 100                      # 每次 update 前的 rollout 步数（phase1 smoke test 用小值）
+  num_epochs: 4                       # 每次 update 的 PPO epochs
+  batch_size: 25                      # minibatch size
+  entropy_coef: 0.01                   # entropy bonus coefficient
+  value_coef: 0.5                     # value loss coefficient
+  max_grad_norm: 0.5                  # gradient clipping
+
+  # --- MAPPO-L 专用（MAPPO 忽略这些字段）---
+  cost_limit: 25.0                    # constraint budget per episode
+  lagrangian_lr: 0.01                 # Lagrangian multiplier learning rate
+  initial_lagrangian_multiplier: 1.0  # lambda 初始值
+  lagrangian_update_freq: 1           # 每 N 次 policy update 更新一次 Lagrangian乘子
+
+  # --- MARL 特有 ---
+  agent_type: mlp                     # 网络类型: mlp, transformer
+  share_policy: true                  # true = 共享策略（MAPPO 默认）, false = 独立策略
+
+  # --- 设备 ---
+  device: cpu                         # cpu 或 cuda
+
+# smoke test 控制
+smoke_test:
+  num_episodes: 1                     # smoke test 用 1 episode
+  save_dir: results/phase1/smoke      # 输出目录
