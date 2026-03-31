@@ -106,7 +106,7 @@ def main():
             "algo": {"algo_name": "MAPPO", "hidden_dim": 64, "activation": "tanh", "lr": 3e-4},
             "env": {"env_name": "safehalfcheetah2x3", "fallback": True, "render_mode": None},
         }
-    cfg = make_algo_config("MAPPO", base_cfg)
+    cfg = make_algo_config(base_cfg.get("algo", {}).get("algo_name", "MAPPO"), base_cfg)
 
     env_name_raw = cfg.get("env", {}).get("env_name", "safeant2x4").lower()
     render_mode = cfg.get("env", {}).get("render_mode", None)
@@ -162,7 +162,7 @@ def main():
     # 5. Run episode
     # ------------------------------------------------------------------
     print("\n[4] Running 1 episode...")
-    max_steps = min(cfg.get("env", {}).get("max_episode_steps", 1000), 200)
+    max_steps = 200  # demo cap: keep smoke runs lightweight
     try:
         stats = run_episode(policy, env, max_steps=max_steps)
         print(f"\n   Episode done: steps={stats['steps']}, done={stats['done']}")
