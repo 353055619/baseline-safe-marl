@@ -1,7 +1,7 @@
 """
 scripts/demo_episode.py — Minimal End-to-End Episode Demo
 ===============================================================
-目标：验证 MAPPO / MAPPO-L / HAPPO stub + fallback CostWrapper + safe_mamujoco_adapter
+目标：验证 MAPPO / MAPPO-L / HAPPO / MACPO stub + fallback CostWrapper + safe_mamujoco_adapter
       能完整跑通 1 episode，支持算法切换。
 
 ⚠️ 这是集成验证 demo，不是训练脚本。随机策略，不做学习。
@@ -12,6 +12,7 @@ CLI 用法:
     uv run --with torch --with gymnasium --with numpy python scripts/demo_episode.py --algo MAPPO --max-steps 100
     uv run --with torch --with gymnasium --with numpy python scripts/demo_episode.py --algo MAPPO-L --max-steps 200
     uv run --with torch --with gymnasium --with numpy python scripts/demo_episode.py --algo HAPPO --max-steps 100
+    uv run --with torch --with gymnasium --with numpy python scripts/demo_episode.py --algo MACPO --max-steps 100
 """
 
 import argparse
@@ -46,7 +47,7 @@ _FALLBACK_ENV_FACTORIES = {
 
 
 def resolve_policy_class(algo_name: str):
-    """动态 import 对应的 Policy 类（MAPPO / MAPPO-L / HAPPO）。"""
+    """动态 import 对应的 Policy 类（MAPPO / MAPPO-L / HAPPO / MACPO）。"""
     name = algo_name.upper()
     if name == "MAPPO-L":
         from algos.mappo_lagrangian import MAPPOLPolicy as Policy
@@ -54,8 +55,10 @@ def resolve_policy_class(algo_name: str):
         from algos.mappo import MAPPOPolicy as Policy
     elif name == "HAPPO":
         from algos.happo import HAPPOPolicy as Policy
+    elif name == "MACPO":
+        from algos.macpo import MACPOPolicy as Policy
     else:
-        raise ValueError(f"Unsupported algo: {algo_name}. Supported: MAPPO, MAPPO-L, HAPPO")
+        raise ValueError(f"Unsupported algo: {algo_name}. Supported: MAPPO, MAPPO-L, HAPPO, MACPO")
     return Policy
 
 
@@ -90,7 +93,7 @@ def run_episode(policy, env, max_steps: int) -> dict:
 
 def main():
     parser = argparse.ArgumentParser(description="MAPPO/MAPPO-L end-to-end episode demo")
-    parser.add_argument("--algo", type=str, default=None, choices=["MAPPO", "MAPPO-L", "HAPPO"],
+    parser.add_argument("--algo", type=str, default=None, choices=["MAPPO", "MAPPO-L", "HAPPO", "MACPO"],
                         help="Algorithm to run (default: from YAML config)")
     parser.add_argument("--max-steps", type=int, default=200,
                         help="Max episode steps (default: 200)")
