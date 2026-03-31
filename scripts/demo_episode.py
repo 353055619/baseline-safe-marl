@@ -1,5 +1,5 @@
 """
-scripts/demo_episode_mappo.py — Minimal End-to-End Episode Demo
+scripts/demo_episode.py — Minimal End-to-End Episode Demo
 ===============================================================
 目标：验证 MAPPO/MAPPO-L stub + fallback CostWrapper + safe_mamujoco_adapter
       能完整跑通 1 episode，支持算法切换。
@@ -8,9 +8,9 @@ scripts/demo_episode_mappo.py — Minimal End-to-End Episode Demo
 
 CLI 用法:
     cd /path/to/baseline-safe-marl
-    uv run --with torch --with gymnasium --with numpy python scripts/demo_episode_mappo.py
-    uv run --with torch --with gymnasium --with numpy python scripts/demo_episode_mappo.py --algo MAPPO --max-steps 100
-    uv run --with torch --with gymnasium --with numpy python scripts/demo_episode_mappo.py --algo MAPPO-L --max-steps 200
+    uv run --with torch --with gymnasium --with numpy python scripts/demo_episode.py
+    uv run --with torch --with gymnasium --with numpy python scripts/demo_episode.py --algo MAPPO --max-steps 100
+    uv run --with torch --with gymnasium --with numpy python scripts/demo_episode.py --algo MAPPO-L --max-steps 200
 """
 
 import argparse

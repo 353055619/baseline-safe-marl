@@ -15,7 +15,7 @@
 | Config enrichment | ✅ 就绪 | `src/algo_config.py` |
 | Fallback env adapter | ✅ 就绪 | `envs/safe_mamujoco_adapter.py` |
 | Cost wrapper | ✅ 就绪 | `envs/fallback_cost_wrapper.py` |
-| 1 episode demo | ✅ 存在 | `scripts/demo_episode_mappo.py` |
+| 1 episode demo | ✅ 存在 | `scripts/demo_episode.py` |
 | smoke test | ✅ 4 envs 通过 | `results/phase1/fallback/` |
 
 ---
@@ -60,5 +60,5 @@
 
 当前是否可以开始最小训练？
 
-- 如接受**手动替换 algo name + hardcoded 少量参数**：`scripts/demo_episode_mappo.py` 已可演示
+- 如接受**手动替换 algo name + hardcoded 少量参数**：`scripts/demo_episode.py` 已可演示
 - 如要求**config 驱动 + 统一入口**：缺口 #1 尚未解决，需要先做统一 demo 入口
