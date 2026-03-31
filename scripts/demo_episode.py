@@ -18,6 +18,7 @@ CLI 用法:
 """
 
 import argparse
+import csv
 import sys
 from pathlib import Path
 
@@ -150,6 +151,8 @@ def main():
                         help="Max episode steps (default: 200)")
     parser.add_argument("--train", action="store_true",
                         help="After episode: collect trajectory and call policy.train()")
+    parser.add_argument("--episodes", type=int, default=1,
+                        help="Number of episodes to run (default: 1)")
     args, _ = parser.parse_known_args()
 
     print("=" * 60)
@@ -214,45 +217,65 @@ def main():
         import traceback; traceback.print_exc()
         return 1
 
-    # 4. Run episode
-    print(f"\n[4] Running 1 episode (max_steps={args.max_steps})...")
+    # 4. CSV logger setup
+    results_dir = PROJECT_ROOT / "results"
+    results_dir.mkdir(exist_ok=True)
+    csv_path = results_dir / f"{effective_algo}.csv"
+    csv_header = ["algo", "episode", "reward", "cost", "steps", "done"]
+    file_is_new = not csv_path.exists()
+
+    print(f"\n[4] CSV log: {csv_path}  ({args.episodes} episode(s))")
+
+    # 5. Episode loop
+    print(f"\n[5] Running {args.episodes} episode(s)...")
     try:
-        env = factory(render_mode=render_mode)  # re-create for fresh state
-        stats = run_episode(policy, env, max_steps=args.max_steps)
-        print(f"\n   Episode done: steps={stats['steps']}, done={stats['done']}")
-        for agent in stats["total_reward"]:
-            print(f"   {agent}: reward={stats['total_reward'][agent]:.3f}  "
-                  f"cost={stats['total_cost'][agent]:.3f}")
+        for ep in range(1, args.episodes + 1):
+            episode_seed = 42 + ep  # different seed per episode
+            env = factory(render_mode=render_mode)
+            env.reset(seed=episode_seed)
+            # run episode
+            stats = run_episode(policy, env, max_steps=args.max_steps)
+            avg_reward = sum(stats["total_reward"].values()) / max(len(stats["total_reward"]), 1)
+            avg_cost = sum(stats["total_cost"].values()) / max(len(stats["total_cost"]), 1)
+            print(f"  episode {ep}/{args.episodes}: reward={avg_reward:.3f}  cost={avg_cost:.3f}  steps={stats['steps']}")
 
-        # --train: demonstrate trajectory collection + policy.train()
-        if args.train:
-            print(f"\n[5] Collecting trajectory for training demo...")
-            env2 = factory(render_mode=render_mode)
-            traj_stats = collect_trajectory(policy, env2, max_steps=args.max_steps)
-            env2.close()
+            # write CSV
+            with open(csv_path, "a", newline="") as f:
+                writer = csv.DictWriter(f, fieldnames=csv_header)
+                if file_is_new:
+                    writer.writeheader()
+                    file_is_new = False
+                writer.writerow({
+                    "algo": effective_algo,
+                    "episode": ep,
+                    "reward": round(avg_reward, 4),
+                    "cost": round(avg_cost, 4),
+                    "steps": stats["steps"],
+                    "done": stats["done"],
+                })
+            env.close()
 
-            n_steps = traj_stats["steps"]
-            print(f"\n[6] Creating {effective_algo} trainer...")
-            try:
+            # --train: trajectory + train after each episode
+            if args.train:
+                env2 = factory(render_mode=render_mode)
+                traj_stats = collect_trajectory(policy, env2, max_steps=args.max_steps)
+                env2.close()
+                n_steps = traj_stats["steps"]
                 TrainerCls = resolve_trainer_class(effective_algo)
                 trainer = TrainerCls(cfg, policy)
-                print(f"   {TrainerCls.__name__} created OK")
-                print(f"\n[7] Calling trainer.train(num_steps={n_steps})...")
                 train_metrics = trainer.train(num_steps=n_steps)
-                print(f"   trainer.train() returned: { {k: float(v) if isinstance(v,(int,float)) else v for k,v in train_metrics.items()} }")
-            except Exception as e:
-                print(f"   trainer.train() failed: {e}")
-                import traceback; traceback.print_exc()
+                print(f"  [train] episode {ep} train_metrics: { {k: float(v) if isinstance(v,(int,float)) else v for k,v in train_metrics.items()} }")
 
-        env.close()
+        print(f"\n   All {args.episodes} episodes logged to {csv_path}")
+
     except Exception as e:
-        print(f"\n   FAIL during episode: {e}")
+        print(f"\n   FAIL during episode loop: {e}")
         import traceback; traceback.print_exc()
         return 1
 
     print()
     print("=" * 60)
-    print("=== END-TO-END DEMO COMPLETE ===")
+    print(f"=== DONE: {args.episodes} episode(s) complete, results in {csv_path} ===")
     print("=" * 60)
     return 0
 
