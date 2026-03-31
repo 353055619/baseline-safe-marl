@@ -1,7 +1,7 @@
 # Algorithm Implementation Status
 
 > 面向 Godw 审阅，记录 6 个候选算法的当前实现状态。
-> 最后更新：2026-03-31
+> 最后更新：2026-03-31（smoke test 6/6 PASS）
 
 ## 总览
 
@@ -64,14 +64,14 @@
 
 ## 下一步优先顺序（建议）
 
-1. **批量验收测试**（Task A）：所有 6 个 stub 跑 `uv run --with torch --with gymnasium python -c "from algos.<algo> import ..."`，确保都能 import + instantiate
-2. **MAPPO-L smoke test**：与 fallback adapter 集成，跑 1 episode random policy
-3. **FACMAC / MATD3 evaluate_actions 验收**：验证 Q-value 返回格式正确
+1. ~~批量验收测试~~ ✅ 完成（Task A）：6/6 PASS，`scripts/smoke_test_algos.py`
+2. ~~MAPPO-L / FACMAC / MATD3 单独验收~~ ✅ 已并入统一 smoke test
+3. **与 fallback CostWrapper 集成**：algo stub + env wrapper 端到端跑通 1 episode
 4. **Config 系统接入**：将 YAML config 与各 algo stub 对接
 
 ---
 
 ## 当前阻塞
 
-- 原生 Safe MAMujoco 仍未解决（`mujoco_py + MuJoCo 2.1.0` 阻塞），fallback adapter 已就绪
-- Stub 全在本地，尚未同步到服务器验证（本地 uv 环境无 gymnasium）
+- 原生 Safe MAMujoco：`mujoco_py + MuJoCo 2.1.0 binary` 仍无公开来源，fallback CostWrapper 已就绪
+- Stub smoke test 已在 server-2（RTX 3090，`conda safe-marl`）完成 ✅
