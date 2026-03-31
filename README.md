@@ -27,6 +27,7 @@ Multi-agent Safe RL baseline project — 6 algorithms on multi-agent safe MuJoCo
 | `docs/algorithm-research.md` | 6 个算法候选调研与 shortlist |
 | `docs/architecture/phase1-prototype-plan.md` | Phase 1 原型计划（原生路线） |
 | `docs/architecture/phase1-fallback-plan.md` | Phase 1 fallback 计划（当前路线） |
+| `docs/smoke-test-quickstart.md` | smoke test 快速使用说明 |
 | `docs/environment-smoke-test-plan.md` | 环境 smoke test 记录与阻塞分析 |
 
 ## Principles
@@ -59,8 +60,9 @@ baseline-safe-marl/
 
 ## Quick Start (Server-2)
 
+详细说明见 → `docs/smoke-test-quickstart.md`
+
 ```bash
-# Server environment (Python 3.10 required for mujoco support)
 ssh godw@172.20.135.15 -p 20022
 LD_LIBRARY_PATH=/home/godw/.mujoco/mujoco210/bin:$LD_LIBRARY_PATH \
     /usr/bin/python3.10 /home/godw/code/phd2/scripts/phase1_fallback_smoke_test.py --env ant

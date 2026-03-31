@@ -66,7 +66,7 @@
 
 1. ~~批量验收测试~~ ✅ 完成（Task A）：6/6 PASS，`scripts/smoke_test_algos.py`
 2. ~~MAPPO-L / FACMAC / MATD3 单独验收~~ ✅ 已并入统一 smoke test
-3. **与 fallback CostWrapper 集成**：algo stub + env wrapper 端到端跑通 1 episode
+3. **与 fallback CostWrapper 集成**：algo stub + env wrapper 端到端跑通 1 episode（运行说明见 `docs/smoke-test-quickstart.md`）
 4. **Config 系统接入**：将 YAML config 与各 algo stub 对接
 
 ---
