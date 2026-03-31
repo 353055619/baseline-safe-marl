@@ -28,6 +28,7 @@ Multi-agent Safe RL baseline project — 6 algorithms on multi-agent safe MuJoCo
 | `docs/architecture/phase1-prototype-plan.md` | Phase 1 原型计划（原生路线） |
 | `docs/architecture/phase1-fallback-plan.md` | Phase 1 fallback 计划（当前路线） |
 | `docs/smoke-test-quickstart.md` | smoke test 快速使用说明 |
+| `docs/minimal-training-readiness.md` | 最小训练就绪检查清单 |
 | `docs/config-integration-notes.md` | config 系统接入说明 |
 | `docs/environment-smoke-test-plan.md` | 环境 smoke test 记录与阻塞分析 |
 

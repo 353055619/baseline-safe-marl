@@ -68,6 +68,7 @@
 2. ~~MAPPO-L / FACMAC / MATD3 单独验收~~ ✅ 已并入统一 smoke test
 3. **与 fallback CostWrapper 集成**：algo stub + env wrapper 端到端跑通 1 episode（运行说明见 `docs/smoke-test-quickstart.md`）
 4. **Config 系统接入**：`src/algo_config.py` 已就绪（详见 `docs/config-integration-notes.md`）
+5. **进入最小训练前检查**：详见 `docs/minimal-training-readiness.md`
 
 ---
 
