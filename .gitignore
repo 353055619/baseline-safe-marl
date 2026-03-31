@@ -32,3 +32,6 @@ logs/
 # Local env
 .env
 .env.*
+
+# Jupyter
+.ipynb_checkpoints/
