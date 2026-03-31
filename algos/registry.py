@@ -10,12 +10,13 @@ algos/registry.py — Algorithm Registry
     policy = PolicyCls(cfg)
     trainer = TrainerCls(cfg, policy)
 
-当前覆盖算法（5 个）：
+当前覆盖算法（6 个）：
     MAPPO         — on-policy PPO, shared actor-critic
     MAPPO-L       — MAPPO + Lagrangian cost constraint
     HAPPO         — on-policy, heterogeneous agents, trust region
     MACPO         — on-policy, MACPO constraint (CVPO-style)
     MATD3         — off-policy DDPG family, twin critics, delayed policy update
+    FACMAC        — off-policy, factored critic, Q-mixing, centralized critics
 """
 
 from __future__ import annotations
@@ -48,6 +49,10 @@ ALGO_REGISTRY: dict[str, Tuple[str, str]] = {
     "MATD3": (
         "algos.matd3:MATD3Policy",
         "algos.matd3:MATD3Trainer",
+    ),
+    "FACMAC": (
+        "algos.facmac:FACMACPolicy",
+        "algos.facmac:FACMACTrainer",
     ),
 }
 
