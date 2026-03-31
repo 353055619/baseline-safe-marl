@@ -15,7 +15,7 @@
 | Config enrichment | ✅ 就绪 | `src/algo_config.py` |
 | Fallback env adapter | ✅ 就绪 | `envs/safe_mamujoco_adapter.py` |
 | Cost wrapper | ✅ 就绪 | `envs/fallback_cost_wrapper.py` |
-| 1 episode demo | ✅ 存在（MAPPO / MAPPO-L / HAPPO / MACPO） | `scripts/demo_episode.py` |
+| 1 episode demo | ✅ 存在（MAPPO / MAPPO-L / HAPPO / MACPO / MATD3） | `scripts/demo_episode.py` |
 | smoke test | ✅ 4 envs 通过 | `results/phase1/fallback/` |
 
 ---
@@ -24,7 +24,7 @@
 
 | # | 缺口 | 说明 | 优先级 |
 |---|------|------|--------|
-| 1 | **统一 demo 入口脚本** | 当前 demo_episode.py 支持 MAPPO / MAPPO-L / HAPPO / MACPO（4 个 on-policy）；下一步：统一入口支持 YAML 指定 algo，支持 MATD3 / FACMAC（off-policy） | 高 |
+| 1 | **统一 demo 入口脚本** | 当前 demo_episode.py 支持 MAPPO / MAPPO-L / HAPPO / MACPO / MATD3（5 个 on-policy）；下一步：统一入口支持 YAML 指定 algo，支持 FACMAC（off-policy） | 高 |
 | 2 | **Rollout buffer（on-policy）** | MAPPO-L / MACPO / MAPPO 需要 rollout buffer 存储 (obs, action, reward, done)，支持 GAE advantage 计算 | 高 |
 | 3 | **Replay buffer（off-policy）** | MATD3 / FACMAC 需要 replay buffer 支持随机采样 | 高 |
 | 4 | **Episode 统计日志** | 当前 smoke test 输出到 JSON；最小训练需要统一 logger，记录每 episode 的 return / cost / length / timestep | 中 |
@@ -53,6 +53,7 @@
 1. 先完成**统一 demo 入口**（缺口 #1），打通 config → env → policy → trainer → rollout → log 的完整链路
 2. 在 demo 入口中**集成 rollout buffer**（缺口 #2，on-policy），让 MAPPO-L 能跑起来
 3. Off-policy buffer（缺口 #3）可在 demo 入口稳定后单独加
+4. **最小 train 选项**（phd1 正在进行中）：在 demo 基础上加入多 episode 循环 + policy update，从 demo 进入最小训练
 
 ---
 
