@@ -64,6 +64,7 @@ SMOKE_TESTS = [
     },
 ]
 
+# Default minimal cfg used by most algos
 MINIMAL_CFG = {
     "device": "cpu",
     "algo": {
@@ -78,37 +79,44 @@ MINIMAL_CFG = {
     },
 }
 
+# FACMAC requires n_agents to be set so its critic list matches input size
+MINIMAL_CFG_FACMAC = dict(MINIMAL_CFG)
+MINIMAL_CFG_FACMAC["env"] = dict(MINIMAL_CFG["env"], n_agents=1, num_agents=1)
+
+
+def get_cfg_for_algo(name: str) -> dict:
+    """Return the appropriate cfg for a given algorithm."""
+    if name == "FACMAC":
+        return MINIMAL_CFG_FACMAC
+    return MINIMAL_CFG
+
 
 def test_algo(spec: dict) -> tuple[bool, str]:
     """Test a single algorithm stub. Returns (passed, message)."""
     name = spec["name"]
     try:
+        cfg = get_cfg_for_algo(name)
         mod = __import__(spec["module"], fromlist=[spec["policy"], spec["trainer"]])
         PolicyCls = getattr(mod, spec["policy"])
         TrainerCls = getattr(mod, spec["trainer"])
 
-        policy = PolicyCls(MINIMAL_CFG, agent_id=0)
-        trainer = TrainerCls(MINIMAL_CFG, policy)
+        policy = PolicyCls(cfg, agent_id=0)
+        trainer = TrainerCls(cfg, policy)
 
-        # Some stubs (MAPPOLPolicy, MACPOPolicy) don't set obs_dim in __init__;
-        # use cfg fallback for smoke test.
-        obs_dim = getattr(policy, "obs_dim", MINIMAL_CFG["env"]["obs_dim"])
-        action_dim = getattr(policy, "action_dim", MINIMAL_CFG["env"]["action_dim"])
+        # Some stubs don't set obs_dim/action_dim in __init__; use cfg fallback.
+        obs_dim = getattr(policy, "obs_dim", cfg["env"]["obs_dim"])
+        action_dim = getattr(policy, "action_dim", cfg["env"]["action_dim"])
         obs = np.random.randn(obs_dim).astype(np.float32)
         action = policy.get_actions(obs, deterministic=True)
-        # Scalar actions (discrete stub style) are OK; just check it's a numpy array
         assert hasattr(action, "shape"), f"{name}: action has no shape attr: {action}"
-        # Most stubs produce continuous actions; MAPPO-L/MACPO are scalar discrete stubs
         if action_dim > 1:
             assert action.shape == (action_dim,), \
                 f"{name}: action shape {action.shape} vs {(action_dim,)}"
 
-        # FACMAC stub has a known tensor shape bug in single-agent evaluate_actions;
-        # skip it in smoke test — instantiate + get_actions + train are sufficient proof.
-        if spec["name"] != "FACMAC":
-            result = policy.evaluate_actions(obs, action)
-            assert any(k in result for k in ("log_prob", "q1", "q_min", "q_tot")), \
-                f"{name}: evaluate_actions missing expected key"
+        # All algos: evaluate_actions should return at least one recognised key
+        result = policy.evaluate_actions(obs, action)
+        assert any(k in result for k in ("log_prob", "q1", "q_min", "q_tot")), \
+            f"{name}: evaluate_actions missing expected key"
 
         metrics = trainer.train(num_steps=5)
         assert isinstance(metrics, dict), f"{name}: train() did not return dict"
