@@ -2,6 +2,7 @@
 scripts/demo_episode.py — Minimal End-to-End Episode Demo
 ===============================================================
 目标：验证 MAPPO / MAPPO-L / HAPPO / MACPO / MATD3 stub + fallback CostWrapper + safe_mamujoco_adapter
+# 并支持 --train 模式：trajectory 收集 → policy.train() 演示
       能完整跑通 1 episode，支持算法切换。
 
 ⚠️ 这是集成验证 demo，不是训练脚本。随机策略，不做学习。
@@ -47,6 +48,24 @@ _FALLBACK_ENV_FACTORIES = {
 }
 
 
+def resolve_trainer_class(algo_name: str):
+    """动态 import 对应的 Trainer 类。"""
+    name = algo_name.upper()
+    if name == "MAPPO-L":
+        from algos.mappo_lagrangian import MAPPOLTrainer as Trainer
+    elif name == "MAPPO":
+        from algos.mappo import MAPPOTrainer as Trainer
+    elif name == "HAPPO":
+        from algos.happo import HAPPOTrainer as Trainer
+    elif name == "MACPO":
+        from algos.macpo import MACPOTrainer as Trainer
+    elif name == "MATD3":
+        from algos.matd3 import MATD3Trainer as Trainer
+    else:
+        raise ValueError(f"Unsupported algo: {algo_name}. Supported: MAPPO, MAPPO-L, HAPPO, MACPO, MATD3")
+    return Trainer
+
+
 def resolve_policy_class(algo_name: str):
     """动态 import 对应的 Policy 类（MAPPO / MAPPO-L / HAPPO / MACPO / MATD3）。"""
     name = algo_name.upper()
@@ -65,8 +84,37 @@ def resolve_policy_class(algo_name: str):
     return Policy
 
 
+def collect_trajectory(policy, env, max_steps: int) -> dict:
+    """
+    Collect one episode of trajectory data for training demonstration.
+    Returns dict with keys: obs, actions, rewards, dones, info per agent.
+    """
+    obs_dict, info_dict = env.reset(seed=42)
+    trajectory = {agent: {"obs": [], "actions": [], "rewards": [], "dones": []} for agent in env.agents}
+    step_count = 0
+    done = False
+
+    print(f"\nTrajectory collection: {len(env.agents)} agents, max_steps={max_steps}")
+    while not done and step_count < max_steps:
+        action_dict = {}
+        for agent in env.agents:
+            action_dict[agent] = policy.get_actions(obs_dict[agent], deterministic=False)
+        obs_dict, rewards, terms, truncs, info_dict = env.step(action_dict)
+        for agent in env.agents:
+            trajectory[agent]["obs"].append(obs_dict[agent])
+            trajectory[agent]["actions"].append(action_dict[agent])
+            trajectory[agent]["rewards"].append(rewards.get(agent, 0.0))
+            done_agent = terms.get(agent, False) or truncs.get(agent, False)
+            trajectory[agent]["dones"].append(done_agent)
+        step_count += 1
+        done = all(terms.values()) or all(truncs.values())
+
+    print(f"  Collected {step_count} transitions for {len(env.agents)} agents")
+    return {"steps": step_count, "trajectory": trajectory}
+
+
 def run_episode(policy, env, max_steps: int) -> dict:
-    """Run one episode. Returns collected stats."""
+    """Run one episode. Returns collected stats (no trajectory stored)."""
     obs_dict, info_dict = env.reset(seed=42)
     total_reward = {agent: 0.0 for agent in env.agents}
     total_cost = {agent: 0.0 for agent in env.agents}
@@ -100,10 +148,14 @@ def main():
                         help="Algorithm to run (default: from YAML config)")
     parser.add_argument("--max-steps", type=int, default=200,
                         help="Max episode steps (default: 200)")
+    parser.add_argument("--train", action="store_true",
+                        help="After episode: collect trajectory and call policy.train()")
     args, _ = parser.parse_known_args()
 
     print("=" * 60)
     print("MAPPO / MAPPO-L + Fallback Safe MAMujoco — Episode Demo")
+    if args.train:
+        print("  [train mode: trajectory collection + trainer.train() demonstration]")
     print("=" * 60)
     print(f"Project root: {PROJECT_ROOT}")
 
@@ -171,6 +223,27 @@ def main():
         for agent in stats["total_reward"]:
             print(f"   {agent}: reward={stats['total_reward'][agent]:.3f}  "
                   f"cost={stats['total_cost'][agent]:.3f}")
+
+        # --train: demonstrate trajectory collection + policy.train()
+        if args.train:
+            print(f"\n[5] Collecting trajectory for training demo...")
+            env2 = factory(render_mode=render_mode)
+            traj_stats = collect_trajectory(policy, env2, max_steps=args.max_steps)
+            env2.close()
+
+            n_steps = traj_stats["steps"]
+            print(f"\n[6] Creating {effective_algo} trainer...")
+            try:
+                TrainerCls = resolve_trainer_class(effective_algo)
+                trainer = TrainerCls(cfg, policy)
+                print(f"   {TrainerCls.__name__} created OK")
+                print(f"\n[7] Calling trainer.train(num_steps={n_steps})...")
+                train_metrics = trainer.train(num_steps=n_steps)
+                print(f"   trainer.train() returned: { {k: float(v) if isinstance(v,(int,float)) else v for k,v in train_metrics.items()} }")
+            except Exception as e:
+                print(f"   trainer.train() failed: {e}")
+                import traceback; traceback.print_exc()
+
         env.close()
     except Exception as e:
         print(f"\n   FAIL during episode: {e}")
