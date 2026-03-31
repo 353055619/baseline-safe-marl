@@ -34,6 +34,8 @@ def resolve_policy_class(algo_name):
         from algos.macpo import MACPOPolicy as Policy
     elif name == "MATD3":
         from algos.matd3 import MATD3Policy as Policy
+    elif name == "FACMAC":
+        from algos.facmac import FACMACPolicy as Policy
     else:
         raise ValueError(f"Unsupported algo: {algo_name}")
     return Policy
@@ -51,6 +53,8 @@ def resolve_trainer_class(algo_name):
         from algos.macpo import MACPOTrainer as Trainer
     elif name == "MATD3":
         from algos.matd3 import MATD3Trainer as Trainer
+    elif name == "FACMAC":
+        from algos.facmac import FACMACTrainer as Trainer
     else:
         raise ValueError(f"Unsupported algo: {algo_name}")
     return Trainer
@@ -122,7 +126,7 @@ def run_episode_off_policy(policy, trainer, env, max_steps: int, seed: int = Non
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--algo", type=str, required=True,
-                        choices=["MAPPO", "MAPPO-L", "HAPPO", "MACPO", "MATD3"])
+                        choices=["MAPPO", "MAPPO-L", "HAPPO", "MACPO", "MATD3", "FACMAC"])
     parser.add_argument("--max-steps", type=int, default=200)
     parser.add_argument("--runs", type=int, default=4)
     parser.add_argument("--episodes", type=int, default=5)
@@ -138,7 +142,7 @@ def main():
     policy = PolicyCls(cfg, agent_id=0)
 
     # Initialize trainer (MATD3 needs it for buffer feeding)
-    is_off_policy = args.algo.upper() == "MATD3"
+    is_off_policy = args.algo.upper() in ("MATD3", "FACMAC")
     if is_off_policy:
         TrainerCls = resolve_trainer_class(args.algo)
         trainer = TrainerCls(cfg, policy)
