@@ -201,3 +201,5 @@
 ---
 
 *本报告为初版候选筛选，待 Godclaw review 后调整。*
+
+> 📌 stub 实现状态已更新 → `docs/algorithm-implementation-status.md`

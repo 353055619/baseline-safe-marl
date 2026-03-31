@@ -23,10 +23,11 @@ Multi-agent Safe RL baseline project — 6 algorithms on multi-agent safe MuJoCo
 
 | 文档 | 内容 |
 |------|------|
+| `docs/algorithm-implementation-status.md` | 6 个 stub 实现状态一览 |
+| `docs/algorithm-research.md` | 6 个算法候选调研与 shortlist |
 | `docs/architecture/phase1-prototype-plan.md` | Phase 1 原型计划（原生路线） |
 | `docs/architecture/phase1-fallback-plan.md` | Phase 1 fallback 计划（当前路线） |
 | `docs/environment-smoke-test-plan.md` | 环境 smoke test 记录与阻塞分析 |
-| `docs/algorithm-research.md` | 6 个算法候选调研与 shortlist |
 
 ## Principles
 
@@ -42,9 +43,10 @@ Multi-agent Safe RL baseline project — 6 algorithms on multi-agent safe MuJoCo
 baseline-safe-marl/
 ├── configs/              # YAML experiment configs
 ├── docs/
+│   ├── algorithm-implementation-status.md  # stub 状态一览
+│   ├── algorithm-research.md
 │   ├── architecture/     # Phase plans, specs
-│   ├── specs/            # Project foundation spec
-│   └── algorithm-research.md
+│   └── specs/           # Project foundation spec
 ├── envs/
 │   ├── fallback_cost_wrapper.py    # cost signal wrapper
 │   └── safe_mamujoco_adapter.py   # multi-agent adapter (PettingZoo API)
