@@ -1,0 +1,23 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "baseline-safe-marl"
+version = "0.1.0"
+description = "Safe Multi-Agent Reinforcement Learning Baseline"
+requires-python = ">=3.10"
+dependencies = [
+    "torch",
+    "gymnasium",
+    "numpy",
+    "pyyaml",
+    "tensorboard",
+]
+
+[project.optional-dependencies]
+mujoco = ["gymnasium[mujoco]", "mujoco"]
+dev = ["pytest", "black", "ruff"]
+
+[tool.setuptools.packages.find]
+where = ["src"]
