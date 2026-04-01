@@ -118,7 +118,7 @@ def main():
 
     # Load config
     try:
-        base_cfg = load_config(config_path="configs/phase1_default.yaml")
+        base_cfg = load_config(config_path="configs/defaults/phase1_default.yaml")
     except FileNotFoundError:
         base_cfg = {
             "algo": {"algo_name": args.algo, "hidden_dim": 64},

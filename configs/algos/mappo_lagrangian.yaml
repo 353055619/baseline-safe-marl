@@ -1,0 +1,10 @@
+# MAPPO-L (Lagrangian) algorithm config
+algo:
+  algo_name: MAPPO-L
+  hidden_dim: 64
+  activation: tanh
+  lr: 3.0e-4
+  gamma: 0.99
+  clip_eps: 0.2
+  lam: 0.95
+  lagrangian_threshold: 0.1

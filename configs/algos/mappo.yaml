@@ -1,0 +1,9 @@
+# MAPPO algorithm default config
+algo:
+  algo_name: MAPPO
+  hidden_dim: 64
+  activation: tanh
+  lr: 3.0e-4
+  gamma: 0.99
+  clip_eps: 0.2
+  lam: 0.95

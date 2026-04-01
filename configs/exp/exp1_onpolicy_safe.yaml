@@ -1,0 +1,12 @@
+# Experiment 1: On-policy safe MARL comparison
+# Reference: configs/defaults/phase1_default.yaml
+name: exp1_onpolicy_safe
+env: safeant2x4
+algos:
+  - MAPPO
+  - MAPPO-L
+  - HAPPO
+  - MACPO
+episodes: 10
+max_steps: 500
+runs: 3
