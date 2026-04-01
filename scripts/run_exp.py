@@ -1,8 +1,10 @@
 """
 scripts/run_exp.py — Unified experiment entry point
 用法:
-    python scripts/run_exp.py --algo MAPPO --episodes 10 --max-steps 500
-    python scripts/run_exp.py --algo MATD3 --episodes 5 --max-steps 200 --env safeant2x4
+    python scripts/run_exp.py --algo MAPPO --env safeant2x4 --runs 2 --episodes 50 --max-steps 500
+    python scripts/run_exp.py --algo MATD3 --env safeant2x4 --runs 2 --episodes 50 --max-steps 500
+
+输出: results/{env_name}/{algo}/run_{n}.csv
 """
 
 import argparse
@@ -17,12 +19,21 @@ from baseline_safe_marl.envs.core.adapter import (
     make_safe_ant_2x4,
     make_safe_halfcheetah_2x3,
     make_safe_hopper_2,
+    make_safe_walker_2,
 )
 
 _FALLBACK_ENV_FACTORIES = {
     "safeant2x4": make_safe_ant_2x4,
     "safehalfcheetah2x3": make_safe_halfcheetah_2x3,
     "safehopper2": make_safe_hopper_2,
+    "safewalker2": make_safe_walker_2,
+}
+
+_ENV_NAME_MAP = {
+    "safeant2x4": "ant",
+    "safehalfcheetah2x3": "halfcheetah",
+    "safehopper2": "hopper",
+    "safewalker2": "walker",
 }
 
 
@@ -88,32 +99,17 @@ def run_episode(policy, env, max_steps: int, deterministic: bool = True):
     return {"steps": step_count, "reward": avg_reward, "cost": avg_cost, "done": done}
 
 
-def main():
-    parser = argparse.ArgumentParser(description="Safe MARL experiment runner")
-    parser.add_argument("--algo", type=str, default="MAPPO",
-                        choices=["MAPPO", "MAPPO-L", "HAPPO", "MACPO", "MATD3", "FACMAC"])
-    parser.add_argument("--env", type=str, default="safeant2x4",
-                        choices=["safeant2x4", "safehalfcheetah2x3", "safehopper2"])
-    parser.add_argument("--episodes", type=int, default=1)
-    parser.add_argument("--max-steps", type=int, default=200)
-    parser.add_argument("--train", action="store_true")
-    parser.add_argument("--exp-name", type=str, default=None,
-                        help="Experiment name for results subdir")
-    args = parser.parse_args()
-
-    # Determine results subdirectory
-    if args.exp_name:
-        results_dir = Path("results") / args.exp_name
-    else:
-        results_dir = Path("results")
+def main(args):
+    env_name = _ENV_NAME_MAP.get(args.env, args.env)
+    results_dir = Path("results") / env_name / args.algo
     results_dir.mkdir(parents=True, exist_ok=True)
-    csv_path = results_dir / f"{args.algo}.csv"
-    csv_fields = ["algo", "episode", "reward", "cost", "steps", "done"]
+    csv_path = results_dir / f"run_{args.run}.csv"
+    csv_fields = ["algo", "run", "episode", "reward", "cost", "steps", "done"]
     file_is_new = not csv_path.exists()
 
     print(f"=" * 60)
-    print(f"baseline-safe-marl — {args.algo} experiment")
-    print(f"  env={args.env}  episodes={args.episodes}  max_steps={args.max_steps}")
+    print(f"baseline-safe-marl — {args.algo} on {args.env} ({env_name})")
+    print(f"  run={args.run}/{args.runs}  episodes={args.episodes}  max_steps={args.max_steps}")
     print(f"=" * 60)
 
     # Load config
@@ -125,8 +121,7 @@ def main():
             "env": {"env_name": args.env, "fallback": True},
         }
 
-    effective_algo = args.algo
-    cfg = make_algo_config(effective_algo, base_cfg)
+    cfg = make_algo_config(args.algo, base_cfg)
     factory = _FALLBACK_ENV_FACTORIES[args.env]
 
     # Create env to get dims
@@ -139,11 +134,9 @@ def main():
     cfg["env"]["obs_dim"] = obs_dim
     cfg["env"]["action_dim"] = action_dim
 
-    # Create policy and trainer
+    # Create policy
     PolicyCls = resolve_policy_class(args.algo)
     policy = PolicyCls(cfg, agent_id=0)
-    TrainerCls = resolve_trainer_class(args.algo)
-    trainer = TrainerCls(cfg, policy) if args.train else None
 
     # Run episodes
     for ep in range(1, args.episodes + 1):
@@ -152,7 +145,7 @@ def main():
         stats = run_episode(policy, env, max_steps=args.max_steps)
         env.close()
 
-        print(f"  episode {ep}/{args.episodes}: reward={stats['reward']:.3f}  "
+        print(f"  run={args.run} ep={ep}/{args.episodes}: reward={stats['reward']:.3f}  "
               f"cost={stats['cost']:.3f}  steps={stats['steps']}")
 
         with open(csv_path, "a", newline="") as f:
@@ -162,6 +155,7 @@ def main():
                 file_is_new = False
             w.writerow({
                 "algo": args.algo,
+                "run": args.run,
                 "episode": ep,
                 "reward": round(stats["reward"], 4),
                 "cost": round(stats["cost"], 4),
@@ -169,9 +163,24 @@ def main():
                 "done": stats["done"],
             })
 
-    print(f"\nResults saved to {csv_path}")
+    print(f"\nResults: {csv_path}")
     return 0
 
 
 if __name__ == "__main__":
-    sys.exit(main())
+    parser = argparse.ArgumentParser(description="Safe MARL experiment runner")
+    parser.add_argument("--algo", type=str, default="MAPPO",
+                        choices=["MAPPO", "MAPPO-L", "HAPPO", "MACPO", "MATD3", "FACMAC"])
+    parser.add_argument("--env", type=str, default="safeant2x4",
+                        choices=["safeant2x4", "safehalfcheetah2x3", "safehopper2", "safewalker2"])
+    parser.add_argument("--runs", type=int, default=1, help="Number of independent runs")
+    parser.add_argument("--episodes", type=int, default=1)
+    parser.add_argument("--max-steps", type=int, default=200)
+    parser.add_argument("--train", action="store_true")
+    parser.add_argument("--exp-name", type=str, default=None,
+                        help="Experiment name for results subdir (deprecated)")
+    args = parser.parse_args()
+
+    for run_id in range(1, args.runs + 1):
+        args.run = run_id
+        main(args)
