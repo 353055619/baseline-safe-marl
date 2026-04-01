@@ -2,7 +2,7 @@
 
 **Feature Branch**: `001-codebase-structure`
 **Created**: 2026-04-01
-**Status**: Draft
+**Status**: Implemented
 **Input**: Godw 指令：参考 agv 项目结构，优化 baseline-safe-marl 目录结构；所有项目py文件放入 `src/baseline_safe_marl/`；非项目脚本删除；历史CSV归档；严格遵循 spec-kit 开发规范
 
 ## User Scenarios & Testing *(mandatory)*
